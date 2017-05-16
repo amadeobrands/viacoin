@@ -818,9 +818,9 @@ UniValue getauxblock(const UniValue& params, bool fHelp)
     {
         // Update block
         static unsigned int nTransactionsUpdatedLast;
-        static CBlockIndex* pindexPrev;
+        static CBlockIndex* pindexPrev = nullptr;
         static uint64_t nStart;
-        static CBlock* pblock;
+        static CBlock* pblock = nullptr;
         static std::unique_ptr<CBlockTemplate> pblocktemplate;
 
         if (chainActive.Tip()->nHeight < GetAuxPowStartBlock(consensusParams) - 1)
@@ -832,9 +832,8 @@ UniValue getauxblock(const UniValue& params, bool fHelp)
             {
                 // Deallocate old blocks since they're obsolete now
                 mapNewBlock.clear();
-                for (auto&& pblocktemplate : vNewBlockTemplate) 
-                    pblocktemplate = nullptr;
                 vNewBlockTemplate.clear();
+                pblock = nullptr;
             }
             nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
             pindexPrev = chainActive.Tip();
@@ -861,7 +860,6 @@ UniValue getauxblock(const UniValue& params, bool fHelp)
 
             // Save
             mapNewBlock[pblock->GetHash()] = pblock;
-
             vNewBlockTemplate.push_back(std::move(pblocktemplate));
         }
 
@@ -903,7 +901,7 @@ UniValue getauxblock(const UniValue& params, bool fHelp)
         submitblock_StateCatcher sc(pblock->GetHash());
         RegisterValidationInterface(&sc);
 
-        bool fAccepted = ProcessNewBlock(state, Params(), NULL, pblock, true, NULL, false);
+        bool fAccepted = ProcessNewBlock(state, Params(), nullptr, pblock, true, nullptr, false);
         UnregisterValidationInterface(&sc);
         if (mi != mapBlockIndex.end())
         {
